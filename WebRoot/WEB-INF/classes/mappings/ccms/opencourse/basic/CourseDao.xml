@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.edu.ccnu.imd.ccms.opencourse.basic.dao.CourseDao">
+
+	<sql id="courseColumns">
+		coc.id  AS "id",
+		coc.cno   AS "cno",
+		coc.cname  AS  "cname",
+		coc.tno  AS "tno",
+		coc.grade   AS "grade",
+		coc.score   AS "score",
+		coc.time   AS "time",
+		coc.place  AS  "place",
+		coc.period   AS "period",
+		coc.content   AS "content",
+		coc.demand   AS "demand",
+		coc.target   AS "target",
+		coc.remarks   AS "remarks",
+		
+		cot.tno    AS "teacher.tno",
+		cot.tname   AS "teacher.tname"
+		
+		
+	</sql>
+
+	<sql id="courseJoins">
+		
+	    INNER JOIN ccms_oc_teacher cot ON coc.tno = cot.tno
+	</sql>
+	
+	<sql id="course1Columns">
+		coc.id  AS "id",
+		coc.cno   AS "cno",
+		coc.cname  AS  "cname",
+		coc.tno  AS "tno",
+		coc.grade   AS "grade",
+		coc.score   AS "score",
+		coc.time   AS "time",
+		coc.place  AS  "place",
+		coc.period   AS "period",
+		coc.content   AS "content",
+		coc.demand   AS "demand",
+		coc.target   AS "target",
+		coc.remarks   AS "remarks",
+		
+		cot.tno    AS "teacher.tno",
+		cot.tname   AS "teacher.tname",
+		
+		cos.sno AS "student.sno",
+		cos.sname AS "student.sname"
+	</sql>
+	
+	<sql id="course1Joins">
+		INNER JOIN ccms_oc_student_course cosc ON cosc.cno = coc.cno
+	    INNER JOIN ccms_oc_teacher cot ON coc.tno = cot.tno
+	    INNER JOIN ccms_oc_student cos ON cos.sno=cosc.sno
+	</sql>
+	
+	
+	<select id="get" resultType="Course">
+		SELECT 
+			<include refid="courseColumns"/>
+		FROM ccms_oc_course coc
+		<include refid="courseJoins"/>
+		WHERE 
+			coc.cno = #{cno}			
+	</select>
+
+	<select id="findList" resultType="Course">
+		SELECT
+		<include refid="courseColumns" />
+		FROM ccms_oc_course coc
+		<include refid="courseJoins" />
+		<where>
+			coc.del_flag = #{DEL_FLAG_NORMAL} 
+			 <if test="status!=null and status!=''">
+				AND	coc.status = #{status}
+			</if> 
+			<if test="cname != null and cname!= ''">
+				AND coc.cname LIKE
+				<if test="dbName == 'oracle'">'%'||#{cname}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{cname}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{cname},'%')</if>
+			</if>
+			<if test="grade != null and grade!=''">
+				AND coc.grade = #{grade}
+			</if>
+			<if test="cno!=null and cno!=''">
+				AND coc.cno = #{cno}
+			</if>
+			<if test="tno !=null and tno !=''">
+			    AND coc.tno = #{tno}
+			</if>
+			
+			 
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY coc.cno DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findCourse" resultType="Course">
+	  SELECT
+		<include refid="course1Columns" />
+		FROM ccms_oc_course coc
+		<include refid="course1Joins" />
+	   <where>
+			coc.del_flag = #{DEL_FLAG_NORMAL} AND
+			cosc.del_flag = #{DEL_FLAG_NORMAL} 
+		   <if test="student !=null and student.sno !=null and student.sno !=''">
+			AND cos.sno = #{student.sno}
+		   </if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY coc.cno 
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO ccms_oc_course(
+			id,
+			cno,
+			cname,
+			tno,
+			grade,
+			score,
+			time,
+			place,
+			period,
+			content,
+			demand,
+			target,
+			status,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			del_flag,
+			remarks
+		) VALUES (
+			#{id},
+			#{cno},
+			#{cname},
+			#{tno},
+			#{grade},
+			#{score},
+			#{time},
+			#{place},
+			#{period},
+			#{content},
+			#{demand},
+			#{target},
+			#{status},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{delFlag},
+			#{remarks}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE ccms_oc_course SET 	
+			cno = #{cno},
+			cname = #{cname},
+			tno = #{tno},
+			grade = #{grade},
+			score = #{score},
+			time = #{time},
+			place = #{place},
+			period = #{period},
+			content = #{content},
+			demand = #{demand},
+			target = #{target},
+			status = #{status},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE ccms_oc_course SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+</mapper>

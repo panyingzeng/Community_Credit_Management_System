@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.edu.ccnu.imd.ccms.opencourse.basic.dao.StudentSignDao">
+    
+	<sql id="studentSignColumns">
+		a.id AS "id",
+		a.sno AS "sno",
+		a.cno AS "cno",
+		a.status AS "status",
+		a.tid AS "tid",
+		a.time AS "time",
+		
+		cos.sno AS "student.sno",
+		cos.sname AS "student.sname",
+		
+		coc.cno AS "course.cno",
+		coc.cname AS "course.cname",
+		
+		cots.id AS "teacherSign.id",
+		cots.cno AS "teacherSign.cno",
+		cots.tno AS "teacherSign.tno",
+		cots.status AS "teacherSign.status",
+		cots.starttime AS "teacherSign.startTime",
+		cots.stoptime AS "teacherSign.stopTime"
+		
+	</sql>
+	
+	<sql id="studentSignJoins">
+	inner join ccms_oc_student cos on cos.sno=a.sno
+    inner join ccms_oc_teacher_sign cots on cots.id= a.tid
+    inner join ccms_oc_course coc on coc.cno=a.cno
+	
+	</sql>
+    
+	<select id="get" resultType="StudentSign">
+		SELECT 
+			<include refid="studentSignColumns"/>
+		FROM ccms_oc_student_sign a
+		<include refid="studentSignJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="StudentSign">
+		SELECT 
+			<include refid="studentSignColumns"/>
+		FROM ccms_oc_student_sign a
+		<include refid="studentSignJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL} 
+			AND cots.del_flag = #{DEL_FLAG_NORMAL} 
+			<if test="student !=null and student.sno != null and student.sno != ''">
+				AND cos.sno = #{student.sno}
+			</if>
+			<if test="student !=null and student.sname != null and student.sname != ''">
+			 AND cos.sname LIKE
+			        <if test="dbName == 'oracle'">'%'||#{student.sname}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{student.sname}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{student.sname},'%')</if>
+			</if>
+			<if test="teacherSign !=null and teacherSign.cno !=null and teacherSign.cno !=''">
+			   AND  cots.cno=#{teacherSign.cno}
+			</if>
+			<if test="cno !=null and cno !=''">
+			   AND  a.cno=#{cno}
+			</if>
+			
+			<if test="teacherSign !=null and teacherSign.tno !=null and teacherSign.tno !=''">
+			   AND  cots.tno=#{teacherSign.tno}
+			</if>
+			<if test="tid !=null and tid !=''">
+			   AND  a.tid=#{tid}
+			</if>
+			<if test="sno !=null and sno !=''">
+			   AND a.sno=#{sno}
+			</if>
+			
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="query"  resultType="StudentSign">
+	SELECT 
+			<include refid="studentSignColumns"/>
+		FROM ccms_oc_student_sign a
+		<include refid="studentSignJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL} 
+			AND cots.del_flag = #{DEL_FLAG_NORMAL} 
+		<if test="sno !=null and sno !=''">
+		   AND  a.sno=#{sno}
+		</if>
+	    <if test="course !=null and course.cno !=null and course.cno !=''">
+	       AND coc.cno=#{course.cno}
+	    </if>
+	</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="StudentSign">
+		SELECT 
+			<include refid="studentSignColumns"/>
+		FROM ccms_oc_student_sign a
+		<include refid="studentSignJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select  id="countSign" resultType="Integer">
+		SELECT count(a.tid)
+		FROM ccms_oc_student_sign a
+		WHERE 
+		   a.sno=#{sno} AND
+		   a.tid=#{tid} 
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO ccms_oc_student_sign(
+			id,
+			sno,
+			cno,
+			status,
+			tid,
+			time,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			del_flag,
+			remarks
+		) VALUES (
+			#{id},
+			#{sno},
+			#{cno},
+			#{status},
+			#{tid},
+			#{time},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{delFlag},
+			#{remarks}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE ccms_oc_student_sign SET 	
+			sno = #{sno},
+			cno = #{cno},
+			status = #{status},
+			tid = #{tid},
+			time = #{time},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE ccms_oc_student_sign SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

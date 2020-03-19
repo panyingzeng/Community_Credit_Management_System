@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.edu.ccnu.imd.ccms.opencourse.manager.dao.SignDao">
+
+	<sql id="signColumns">
+		coc.id AS "course.id",
+		coc.cno AS "course.cno",
+		coc.cname AS "course.cname",
+		coc.grade AS "course.grade",
+		coc.score AS "course.score",
+		coc.time AS "course.time",
+		coc.period AS "course.period",
+		
+		cos.sno AS "student.sno",
+		cos.sname AS "student.sname",
+		
+		cots.status AS "teacherSign.status",
+		cots.id AS "teacherSign.id",
+		cots.starttime AS "teacherSign.startTime",
+		cots.stoptime AS "teacherSign.stopTime"
+		
+	</sql>
+	
+	<sql id="signJoins">
+		inner join ccms_oc_student_course cosc on coc.cno = cosc.cno 
+		inner join ccms_oc_student cos on cos.sno = cosc.sno
+		inner join ccms_oc_teacher_sign cots  on cots.cno=coc.cno
+		
+	</sql>
+ 
+	<select id="get" resultType="Sign">
+		SELECT 
+			<include refid="signColumns"/>
+		FROM ccms_oc_course coc 
+		<include refid="signJoins" />
+		WHERE coc .id = #{id}
+	</select>
+
+	<select id="findList" resultType="Sign">
+	SELECT 
+		<include refid="signColumns"/>
+		FROM ccms_oc_course coc 
+		<include refid="signJoins"/>
+		<where>
+			 coc.del_flag = #{DEL_FLAG_NORMAL}
+			  AND
+			 cosc.del_flag = #{DEL_FLAG_NORMAL}
+			 <if test="student!=null and student.sno != null and student.sno!=''">
+				AND cos.sno = #{student.sno} 
+			</if>
+			<if test="course!=null and course.cno!=null and course.cno!=''">
+				AND coc.cno = #{course.cno}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY coc.cno DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	
+	</mapper>

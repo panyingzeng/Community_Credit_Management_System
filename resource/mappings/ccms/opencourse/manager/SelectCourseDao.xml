@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.edu.ccnu.imd.ccms.opencourse.manager.dao.SelectCourseDao">
+
+	<sql id="selectCourseColumns">
+		coc.id "course.id",
+		coc.cno "course.cno",
+		coc.cname "course.cname",
+		cos.sno "student.sno",
+		cos.sname "student.sname",
+		cos.grade "student.grade",
+		cos.major "student.major",
+		cos.ssex "student.ssex"
+	</sql>
+	
+	<sql id="selectCourseJoins">
+		left join ccms_oc_student_course cosc on coc.cno = cosc.cno 
+		left join ccms_oc_student cos on cos.sno = cosc.sno
+	</sql>
+	
+    <sql id="selectCourse1Joins">
+     left join ccms_oc_student cos on cos.sno = cosc.sno
+    </sql>
+ 
+	<select id="get" resultType="SelectCourse">
+		SELECT 
+			<include refid="selectCourseColumns"/>
+		FROM ccms_oc_course coc 
+		<include refid="selectCourseJoins" />
+		WHERE coc .id = #{id}
+	</select>
+
+	<select id="findAllCourse" resultType="SelectCourse">
+	SELECT 
+		<include refid="selectCourseColumns"/>
+		FROM ccms_oc_course coc 
+		<include refid="selectCourseJoins"/>
+		<where>
+			 coc.del_flag = #{DEL_FLAG_NORMAL}
+			  AND
+			 cosc.del_flag = #{DEL_FLAG_NORMAL}
+			 <if test="student!=null and student.sno != null and student.sno!=''">
+				AND cos.sno = #{student.sno} 
+			</if>
+			 <if test="course!=null and course.status!=null and course.status!=''">
+			 	and coc.status = #{course.status}
+			 </if>
+			<if test="student!=null and student.grade != null and student.grade!=''">
+				AND coc.grade = #{student.grade} 
+			</if>
+			<if test="course!=null and course.cno!=null and course.cno!=''">
+				AND coc.cno = #{course.cno}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY coc.cno DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="countCourse" resultType="Integer">
+		select count(*)
+		from ccms_oc_student_course cosc
+		left join ccms_oc_course coc on cosc.cno = coc.cno
+		where 
+		cosc.sno = #{student.sno}
+		and 
+		coc.status = #{course.status}
+		and
+		cosc.del_flag = #{DEL_FLAG_NORMAL} 
+	</select>
+
+	
+	<update id="delete">
+			update ccms_oc_student_course
+			set
+			del_flag = #{DEL_FLAG_DELETE}
+			WHERE 
+			sno = #{student.sno} and cno =#{course.cno}
+	</update>
+	
+	<insert id="insert">
+		INSERT INTO ccms_oc_student_course(
+			id,
+			cno,
+			sno,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			del_flag,
+			remarks
+		) VALUES (
+			#{id},
+			#{course.cno},
+			#{student.sno},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{delFlag},
+			#{remarks}
+		)
+	</insert>
+	
+	<select id="findList" resultType="SelectCourse">
+	SELECT 
+		cosc.cno As "course.cno",
+		cos.sno As "student.sno",
+		cos.sname As "student.sname",
+		cos.grade As "student.grade",
+		cos.major As "student.major",
+		cos.ssex  As"student.ssex"
+     
+	FROM ccms_oc_student_course cosc 
+		
+	  <include refid="selectCourse1Joins"/>
+		<where>
+			 cos.del_flag = #{DEL_FLAG_NORMAL}
+			  AND
+			 cosc.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="course!=null and course.cno!=null and course.cno!=''">
+				AND cosc.cno = #{course.cno}
+			</if> 
+			<if test="student!=null and student.sno != null and student.sno!=''">
+				AND cos.sno = #{student.sno} 
+			</if>
+		</where>
+	</select>
+	
+	
+</mapper>

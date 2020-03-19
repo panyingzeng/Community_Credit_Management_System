@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper  namespace="cn.edu.ccnu.imd.ccms.opencourse.manager.dao.GradeCountDao">
+
+<select id="findList" resultType="GradeCount">
+	 SELECT 
+		cos.sno AS "student.sno",
+		cos.sname AS "student.sname",
+		cos.ssex AS "student.ssex",
+		cos.grade AS "student.grade",
+		cos.major AS "student.major",
+		sum(coc.score) AS "count",
+		cog.grade AS "grade.grade",
+		com.mno AS "manager.mno"
+		
+	 FROM 
+	  ccms_oc_manager AS com,
+	 ccms_oc_student AS cos,
+	 ccms_oc_student_course AS cosc,
+	 ccms_oc_course AS coc,
+	 ccms_oc_grade AS cog
+	 	<where>	 
+		 cosc.sno=cog.sno and
+		 cog.sno =cos.sno  and
+		 cosc.cno=cog.cno  and
+		 cog.cno=coc.cno  
+		 <if test="manager !=null and manager.mno !=null and manager.mno !=''">
+	    AND com.mno=#{manager.mno}
+	     </if>
+		 <if test=" student !=null and student.sno !=null and student.sno !=''">
+		AND cos.sno=#{student.sno}
+		 </if>
+		 <if test=" student !=null and student.grade !=null and student.grade !=''">
+		AND cos.grade=#{student.grade}
+		 </if>
+		 <if test="student !=null and student.major !=null and student.major !=''">
+		AND cos.major=#{student.major} 
+		 </if>
+		 AND  cog.grade>=60	 
+		 group by cos.sno
+		
+		 </where>
+	<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY cos.sno 
+			</otherwise>
+		</choose>
+  </select>
+
+
+</mapper>
